@@ -1,2 +1,0 @@
-# Ff-tournament
-shehebe
