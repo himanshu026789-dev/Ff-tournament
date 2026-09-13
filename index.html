@@ -1,0 +1,84 @@
+export default async function handler(req, res) {
+    if (req.method !== "POST") {
+        return res.status(405).json({
+            success: false,
+            message: "Method not allowed"
+        });
+    }
+
+    try {
+        const {
+            username,
+            uid,
+            facebookName,
+            phone
+        } = req.body || {};
+
+        if (!username || !uid || !facebookName || !phone) {
+            return res.status(400).json({
+                success: false,
+                message: "All fields are required."
+            });
+        }
+
+        const emailHTML = `
+        <div style="font-family:Arial,sans-serif;max-width:600px;">
+            <h2>🎮 New Free Fire Tournament Registration</h2>
+
+            <hr>
+
+            <p><b>👤 In-game Username:</b> ${username}</p>
+            <p><b>🎮 In-game UID:</b> ${uid}</p>
+            <p><b>📘 Facebook Profile Name:</b> ${facebookName}</p>
+            <p><b>📱 Phone Number:</b> ${phone}</p>
+
+            <hr>
+
+            <p>Registration received from your tournament website.</p>
+        </div>
+        `;
+
+        const response = await fetch(
+            "https://api.resend.com/emails",
+            {
+                method: "POST",
+
+                headers: {
+                    "Content-Type": "application/json",
+                    "Authorization":
+                        `Bearer ${process.env.RESEND_API_KEY}`
+                },
+
+                body: JSON.stringify({
+                    from: "Tournament Registration <onboarding@resend.dev>",
+                    to: ["chachanopee@yahoo.com"],
+                    subject: `🔥 New Tournament Registration - ${username}`,
+                    html: emailHTML
+                })
+            }
+        );
+
+        const result = await response.json();
+
+        if (!response.ok) {
+            console.error(result);
+
+            return res.status(500).json({
+                success: false,
+                message: "Email could not be sent."
+            });
+        }
+
+        return res.status(200).json({
+            success: true
+        });
+
+    } catch (error) {
+        console.error(error);
+
+        return res.status(500).json({
+            success: false,
+            message: "Server error."
+        });
+    }
+}
